@@ -5,6 +5,7 @@ public class Conversation
     public string Id { get; set; } = Guid.NewGuid().ToString();
     public string Title { get; set; } = string.Empty;
     public string UserName { get; set; } = string.Empty;
+    public string ThreadId { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; } = DateTime.Now;
     public DateTime LastMessageAt { get; set; } = DateTime.Now;
     public List<Message> Messages { get; set; } = new();

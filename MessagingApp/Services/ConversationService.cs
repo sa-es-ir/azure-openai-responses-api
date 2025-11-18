@@ -1,11 +1,19 @@
+using Azure.AI.OpenAI;
 using MessagingApp.Models;
+using Microsoft.Extensions.Options;
+using OpenAI.Assistants;
 
 namespace MessagingApp.Services;
+#pragma warning disable OPENAI001
 
-public class ConversationService
+public class ConversationService(AzureOpenAIClient azureOpenAIClient,
+    IOptions<AssistantOptions> assistantOptions,
+    ILogger<ConversationService> logger)
 {
     private readonly List<Conversation> _conversations = new();
     private readonly object _lock = new();
+
+    private readonly AssistantClient _assistantClient = azureOpenAIClient.GetAssistantClient();
 
     // Event raised whenever conversations list or a conversation's metadata changes
     public event Action? ConversationsChanged;
@@ -27,37 +35,40 @@ public class ConversationService
         }
     }
 
-    public Conversation CreateOrGetConversation(string userName)
+    public async Task<Conversation> CreateOrGetConversationAsync(string userName)
     {
         bool created = false;
         Conversation? conversation;
-        lock (_lock)
+        var existingConversation = _conversations.FirstOrDefault(c => c.UserName == userName);
+        if (existingConversation != null)
         {
-            var existingConversation = _conversations.FirstOrDefault(c => c.UserName == userName);
-            if (existingConversation != null)
+            conversation = existingConversation;
+        }
+        else
+        {
+            var assistantThread = await _assistantClient.CreateThreadAsync();
+            conversation = new Conversation
             {
-                conversation = existingConversation;
-            }
-            else
-            {
-                conversation = new Conversation { UserName = userName, Title = "New Conversation" };
-                _conversations.Add(conversation);
-                created = true;
-            }
+                UserName = userName,
+                Title = "New Conversation",
+                ThreadId = assistantThread.Value.Id
+            };
+            _conversations.Add(conversation);
+            created = true;
         }
         if (created) RaiseChanged();
         return conversation!;
     }
 
-    public void AddMessage(string conversationId, string text, bool isFromUser)
+    public async Task<Message?> AddMessageAsync(string conversationId, string text, bool isFromUser)
     {
         bool changed = false;
-        lock (_lock)
-        {
-            var conversation = _conversations.FirstOrDefault(c => c.Id == conversationId);
-            if (conversation == null)
-                return;
+        var conversation = _conversations.FirstOrDefault(c => c.Id == conversationId);
+        if (conversation == null)
+            return null;
 
+        if (isFromUser)
+        {
             var message = new Message
             {
                 Text = text,
@@ -68,13 +79,59 @@ public class ConversationService
             conversation.Messages.Add(message);
             conversation.LastMessageAt = DateTime.Now;
 
-            if (isFromUser && conversation.Messages.Count(m => m.IsFromUser) == 1)
+            if (conversation.Messages.Count(m => m.IsFromUser) == 1)
             {
                 conversation.Title = text.Length > 50 ? text.Substring(0, 50) + "..." : text;
             }
-            changed = true;
+
+            await _assistantClient.CreateMessageAsync(conversation.ThreadId, MessageRole.User,
+               [MessageContent.FromText(text)]);
         }
+        else
+        {
+            var run = await _assistantClient.CreateRunAsync(conversation.ThreadId, assistantOptions.Value.AssistantId);
+
+            do
+            {
+                await Task.Delay(TimeSpan.FromMilliseconds(500));
+                run = await _assistantClient.GetRunAsync(conversation.ThreadId, run.Value.Id);
+            }
+            while (run.Value.Status == RunStatus.Queued || run.Value.Status == RunStatus.InProgress);
+
+            if (run.Value.Status == RunStatus.Completed)
+            {
+                var collection = _assistantClient.GetMessagesAsync(conversation.ThreadId, new MessageCollectionOptions { PageSizeLimit = 1 });
+                await foreach (var assistantMessage in collection)
+                {
+                    if (assistantMessage.Role == MessageRole.Assistant)
+                    {
+                        var assistantText = assistantMessage.Content[0].Text;
+                        if (!string.IsNullOrEmpty(assistantText))
+                        {
+                            var assistantResponseMessage = new Message
+                            {
+                                Text = assistantText,
+                                IsFromUser = false,
+                                ConversationId = conversationId,
+                            };
+                            conversation.Messages.Add(assistantResponseMessage);
+                            conversation.LastMessageAt = DateTime.Now;
+                            changed = true;
+                        }
+                        break;
+                    }
+                }
+            }
+
+            logger.LogError("AI run failed with status: {Status} for threadId: {threadId}", run.Value.Status, conversation.ThreadId);
+
+        }
+
+        changed = true;
+
         if (changed) RaiseChanged();
+
+        return conversation.Messages.OrderByDescending(x => x.Timestamp).First();
     }
 
     public void DeleteConversation(string conversationId)

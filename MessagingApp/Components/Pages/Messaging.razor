@@ -66,8 +66,8 @@ else
             <EditForm Model="@messageModel" OnValidSubmit="@SendMessage">
                 <div class="input-group">
                     <InputText @bind-Value="messageModel.Text" class="form-control chat-input"
-                        placeholder="Type your message..." maxlength="500"
-                        @onkeypress="@(async (e) => { if (e.Key == "Enter" && !e.ShiftKey) { await SendMessage(); } })" />
+                               placeholder="Type your message..." maxlength="500"
+                               @onkeypress="@(async (e) => { if (e.Key == "Enter" && !e.ShiftKey) { await SendMessage(); } })" />
                     <button type="submit" class="btn btn-primary send-button" disabled="@isSending">
                         @if (isSending)
                         {
@@ -135,11 +135,11 @@ else
             return;
 
         // Get or create conversation
-        var conversation = ConversationService.CreateOrGetConversation(userName);
+        var conversation = await ConversationService.CreateOrGetConversationAsync(userName);
         currentConversationId = conversation.Id;
 
         // Add user message to conversation
-        ConversationService.AddMessage(currentConversationId, messageModel.Text.Trim(), true);
+        await ConversationService.AddMessageAsync(currentConversationId, messageModel.Text.Trim(), true);
 
         var userMessage = new ChatMessage
         {
@@ -155,15 +155,11 @@ else
         StateHasChanged();
         await ScrollToBottom();
 
-        // Simulate server response with random UUID
-        await Task.Delay(1000 + Random.Shared.Next(500, 1500)); // Random delay 1-2.5 seconds
-
-        var serverResponse = Guid.NewGuid().ToString();
-        ConversationService.AddMessage(currentConversationId, serverResponse, false);
+        var AssistantResponse = await ConversationService.AddMessageAsync(currentConversationId, "", false);
 
         var serverMessage = new ChatMessage
         {
-            Text = serverResponse,
+            Text = AssistantResponse?.Text ?? string.Empty,
             IsFromUser = false,
             Timestamp = DateTime.Now
         };

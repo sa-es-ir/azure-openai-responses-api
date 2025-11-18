@@ -1,13 +1,20 @@
+using Azure.AI.OpenAI;
 using MessagingApp.Components;
+using MessagingApp.Models;
+using System.ClientModel;
 
 var builder = WebApplication.CreateBuilder(args);
+
 
 // Add services to the container.
 builder.Services.AddRazorComponents().AddInteractiveServerComponents();
 
+var aiEndPoint = builder.Configuration["AzureOpenAI:EndPoint"];
+var aiApiKey = builder.Configuration["AzureOpenAI:ApiKey"];
 
-// Add conversation service
+builder.Services.AddSingleton(_ => new AzureOpenAIClient(new Uri(aiEndPoint!), new ApiKeyCredential(aiApiKey!)));
 builder.Services.AddSingleton<MessagingApp.Services.ConversationService>();
+builder.Services.Configure<AssistantOptions>(builder.Configuration.GetSection("AzureOpenAI"));
 
 //string endpoint = builder.Configuration["AZURE_OPENAI_ENDPOINT"];
 //string deployment = builder.Configuration["AZURE_OPENAI_GPT_NAME"];
