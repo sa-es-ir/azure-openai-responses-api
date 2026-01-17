@@ -157,13 +157,12 @@ Once you have these set up, configure your application with the necessary connec
 {
   "AzureOpenAI": {
     "Endpoint": "https://<your-resource-name>.openai.azure.com/",
-    "ApiKey": "<your-api-key>",
+    "ApiKey": "<your-api-key>", // better to put in a secure place or at least environment vars
     "ModelName": "gpt-4o",
     "AssistantId": "<your-assistant-id>" // only for Assistants API
   }
 }
 ```
 
-Ensure this information is kept secure and not exposed in your client-side code or public repositories.
-
-For detailed setup instructions, refer to the [Azure OpenAI Service documentation](https://learn.microsoft.com/en-us/azure/cognitive-services/openai/).
+[Responses API reference](https://learn.microsoft.com/en-us/azure/cognitive-services/openai/)
+[Assistants API reference](https://learn.microsoft.com/en-us/azure/ai-foundry/openai/concepts/assistants?view=foundry-classic)
