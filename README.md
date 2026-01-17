@@ -155,7 +155,9 @@ Once you have these set up, configure your application with the necessary connec
 {
   "AzureOpenAI": {
     "Endpoint": "https://<your-resource-name>.openai.azure.com/",
-    "ApiKey": "<your-api-key>"
+    "ApiKey": "<your-api-key>",
+    "ModelName": "gpt-4o",
+    "AssistantId": "<your-assistant-id>" // only for Assistants API
   }
 }
 ```
