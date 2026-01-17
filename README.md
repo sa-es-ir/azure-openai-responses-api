@@ -18,7 +18,7 @@ Both implementations plug into the same `IConversationService` interface, so you
 ### Calling the Responses API (core part)
 
 ```csharp
-// ConversationWithResponsesAPIService.cs (assistant branch)
+// ConversationWithResponsesAPIService.cs (Responses API)
 var items = new List<ResponseItem>
 {
     ResponseItem.CreateUserMessageItem(
@@ -68,7 +68,7 @@ This uses the latest Responses API surface (`OpenAI.Responses` types) instead of
 ### Calling the Assistants API (core part)
 
 ```csharp
-// ConversationService.cs (assistant branch)
+// ConversationService.cs (assistants)
 var run = await _assistantClient.CreateRunAsync(
     conversation.ThreadId,
     assistantOptions.Value.AssistantId);
