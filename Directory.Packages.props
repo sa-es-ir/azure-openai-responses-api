@@ -1,13 +1,14 @@
 <Project>
-  <PropertyGroup>
-    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
-  </PropertyGroup>
-  <ItemGroup>
-    <PackageVersion Include="Azure.AI.OpenAI" Version="2.5.0-beta.1" />
-    <PackageVersion Include="Azure.Identity" Version="1.17.0" />
-    <PackageVersion Include="Microsoft.Extensions.AI" Version="10.0.0" />
-    <PackageVersion Include="Microsoft.Extensions.AI.Abstractions" Version="10.0.0" />
-    <PackageVersion Include="Microsoft.Extensions.AI.OpenAI" Version="10.0.0-preview.1.25560.10" />
-    <PackageVersion Include="Newtonsoft.Json" Version="13.0.4" />
-  </ItemGroup>
+	<PropertyGroup>
+		<ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+	</PropertyGroup>
+	<ItemGroup>
+		<PackageVersion Include="Azure.AI.OpenAI" Version="2.5.0-beta.1" />
+		<PackageVersion Include="Azure.Identity" Version="1.17.0" />
+		<PackageVersion Include="Detester" Version="1.0.1" />
+		<PackageVersion Include="Microsoft.Extensions.AI" Version="10.0.1" />
+		<PackageVersion Include="Microsoft.Extensions.AI.Abstractions" Version="10.0.1" />
+		<PackageVersion Include="Microsoft.Extensions.AI.OpenAI" Version="10.0.0-preview.1.25560.10" />
+		<PackageVersion Include="Newtonsoft.Json" Version="13.0.4" />
+	</ItemGroup>
 </Project>
