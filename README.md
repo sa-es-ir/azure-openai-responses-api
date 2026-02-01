@@ -9,8 +9,20 @@ This repo is a Blazor Server chat app that shows two ways to talk to Azure OpenA
 
 Both implementations plug into the same `IConversationService` interface, so you can switch between them just by changing DI in `Program.cs`.
 
----
+The best is to watch these videos before:
 
+[Azure OpenAI Assistant in .NET](https://youtu.be/Tr6oA4MU580)
+
+---
+Before running, make sure to set the settings:
+```json
+"AzureOpenAI": {
+  "Endpoint": "https://your-azure-openai-endpoint/",
+  "ApiKey": "your-azure-openai-api-key",
+  "ModelName": "your-deployment-name",
+  "AssistantId": "your-assistant-id" // in case of using Assistant only (get it from azure portal)
+}
+```
 ## Responses API (recommended)
 
 `ConversationWithResponsesAPIService` uses the Azure OpenAI **Responses API** with the official .NET SDK. It keeps the conversation stateful by passing `PreviousResponseId` on each turn.
