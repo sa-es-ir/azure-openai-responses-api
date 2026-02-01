@@ -105,9 +105,10 @@ public class ConversationWithResponsesAPIService : IConversationService
                     ResponseItem.CreateUserMessageItem(
                         new List<ResponseContentPart>
                         {
-                        ResponseContentPart.CreateInputTextPart(conversation.Messages.Last().Text)
+                            ResponseContentPart.CreateInputTextPart(conversation.Messages.Last().Text)
                         })
                 };
+
                 var options = new ResponseCreationOptions
                 {
                     Instructions = "You are an AI assistant that only talks about food based on the user's mood. remember what the user mood before and offer him again if they ask. remember personal user info like name if they put"
@@ -123,8 +124,7 @@ public class ConversationWithResponsesAPIService : IConversationService
                 string? assistantText = response.Value.GetOutputText();
                 string? responseId = response.Value.Id;
 
-
-                if (!string.IsNullOrEmpty(assistantText))
+                if (response.Value.Status == ResponseStatus.Completed && !string.IsNullOrEmpty(assistantText))
                 {
                     var assistantResponseMessage = new Message
                     {
@@ -140,6 +140,9 @@ public class ConversationWithResponsesAPIService : IConversationService
                     conversation.PreviousResponseId = responseId;
                     changed = true;
                 }
+
+                // if response is in queued, loop over calling response api until completed or failed
+                //response = await _responsesClient.GetResponseAsync(responseId);
             }
             catch (Exception ex)
             {
