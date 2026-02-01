@@ -1,4 +1,4 @@
-# MessagingApp with Azure OpenAI (Responses API + Assistants)
+# MessagingApp with Azure OpenAI Responses API (including Assistants) in .NET
 
 ![conversation_image](MessagingApp_conversations.png)
 
