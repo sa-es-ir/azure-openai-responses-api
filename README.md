@@ -12,6 +12,7 @@ Both implementations plug into the same `IConversationService` interface, so you
 The best is to watch these videos before:
 
 [Azure OpenAI Assistant in .NET](https://youtu.be/Tr6oA4MU580)
+[Azure OpenAI Responses in .NET](https://youtu.be/JoG5Gp1Yvfo)
 
 ---
 Before running, make sure to set the settings:
