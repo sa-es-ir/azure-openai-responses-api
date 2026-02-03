@@ -9,7 +9,7 @@ This repo is a Blazor Server chat app that shows two ways to talk to Azure OpenA
 
 Both implementations plug into the same `IConversationService` interface, so you can switch between them just by changing DI in `Program.cs`.
 
-## Thank you fore giving a ⭐ to this repo!
+## Thank you for giving a ⭐ to this repo!
 
 The best is to watch these videos before:
 
