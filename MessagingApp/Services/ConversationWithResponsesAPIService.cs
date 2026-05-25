@@ -6,25 +6,19 @@ using System.ClientModel;
 
 namespace MessagingApp.Services;
 #pragma warning disable OPENAI001
-public class ConversationWithResponsesAPIService : IConversationService
+public class ConversationWithResponsesAPIService(AzureOpenAIClient azureOpenAIClient,
+        IOptions<AssistantOptions> assistantOptions,
+        ILogger<ConversationWithResponsesAPIService> logger) : IConversationService
 {
     private readonly List<Conversation> _conversations = new();
     private readonly object _lock = new();
 
-    private readonly OpenAIResponseClient _responsesClient;
+    private readonly OpenAIResponseClient _responsesClient
+        = azureOpenAIClient.GetOpenAIResponseClient(assistantOptions.Value.ModelName);
     private readonly ILogger<ConversationWithResponsesAPIService> _logger;
 
     public event Action? ConversationsChanged;
     private void RaiseChanged() => ConversationsChanged?.Invoke();
-
-    public ConversationWithResponsesAPIService(
-        AzureOpenAIClient azureOpenAIClient,
-        IOptions<AssistantOptions> assistantOptions,
-        ILogger<ConversationWithResponsesAPIService> logger)
-    {
-        _responsesClient = azureOpenAIClient.GetOpenAIResponseClient(assistantOptions.Value.ModelName);
-        _logger = logger;
-    }
 
     public List<Conversation> GetAllConversations()
     {
@@ -115,6 +109,8 @@ public class ConversationWithResponsesAPIService : IConversationService
                     Instructions = "You are an AI assistant that only talks about food based on the user's mood. remember what the user mood before and offer him again if they ask. remember personal user info like name if they put"
                 };
 
+                // To add external tools
+                //options.Tools.Add(ResponseTool.CreateWebSearchTool());
 
                 if (!string.IsNullOrEmpty(conversation.PreviousResponseId))
                 {
@@ -123,16 +119,16 @@ public class ConversationWithResponsesAPIService : IConversationService
 
                 var response = await _responsesClient.CreateResponseAsync(items, options);
 
-                if (response.Value.Status != ResponseStatus.Completed)
+                if (response.Value.Status is ResponseStatus.InProgress or ResponseStatus.Queued)
                 {
                     response = await GetCompletedResponseAsync(response);
                 }
 
-                string? assistantText = response.Value.GetOutputText();
-                string? responseId = response.Value.Id;
-
-                if (response.Value.Status == ResponseStatus.Completed && !string.IsNullOrEmpty(assistantText))
+                if (response.Value.Status == ResponseStatus.Completed)
                 {
+                    string? assistantText = response.Value.GetOutputText();
+                    string? responseId = response.Value.Id;
+
                     var assistantResponseMessage = new Message
                     {
                         Text = assistantText!,
@@ -150,12 +146,12 @@ public class ConversationWithResponsesAPIService : IConversationService
                 else
                 {
                     // set proper message in case of failure
-                    _logger.LogWarning("Azure OpenAI Responses API returned incomplete response or empty text.");
+                    logger.LogWarning("Azure OpenAI Responses API returned incomplete response or empty text.");
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error while calling Azure OpenAI Responses API.");
+                logger.LogError(ex, "Error while calling Azure OpenAI Responses API.");
             }
         }
 
@@ -173,7 +169,7 @@ public class ConversationWithResponsesAPIService : IConversationService
             await Task.Delay(500);
             response = await _responsesClient.GetResponseAsync(response.Value.Id);
         }
-        while (response.Value.Status == ResponseStatus.InProgress);
+        while (response.Value.Status is ResponseStatus.InProgress or ResponseStatus.Queued);
 
         return response;
     }
