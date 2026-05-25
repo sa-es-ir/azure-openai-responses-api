@@ -2,7 +2,6 @@
 using MessagingApp.Models;
 using Microsoft.Extensions.Options;
 using OpenAI.Responses;
-using System.ClientModel;
 
 namespace MessagingApp.Services;
 #pragma warning disable OPENAI001
@@ -13,9 +12,7 @@ public class ConversationWithResponsesAPIService(AzureOpenAIClient azureOpenAICl
     private readonly List<Conversation> _conversations = new();
     private readonly object _lock = new();
 
-    private readonly OpenAIResponseClient _responsesClient
-        = azureOpenAIClient.GetOpenAIResponseClient(assistantOptions.Value.ModelName);
-    private readonly ILogger<ConversationWithResponsesAPIService> _logger;
+    private readonly ResponsesClient _responsesClient = azureOpenAIClient.GetResponsesClient();
 
     public event Action? ConversationsChanged;
     private void RaiseChanged() => ConversationsChanged?.Invoke();
@@ -95,19 +92,13 @@ public class ConversationWithResponsesAPIService(AzureOpenAIClient azureOpenAICl
         {
             try
             {
-                var items = new List<ResponseItem>
+                var options = new CreateResponseOptions
                 {
-                    ResponseItem.CreateUserMessageItem(
-                        new List<ResponseContentPart>
-                        {
-                            ResponseContentPart.CreateInputTextPart(conversation.Messages.Last().Text)
-                        })
-                };
-
-                var options = new ResponseCreationOptions
-                {
+                    Model = assistantOptions.Value.ModelName,
                     Instructions = "You are an AI assistant that only talks about food based on the user's mood. remember what the user mood before and offer him again if they ask. remember personal user info like name if they put",
                 };
+
+                options.InputItems.Add(ResponseItem.CreateUserMessageItem(conversation.Messages.Last().Text));
 
                 // To add external tools
                 //options.Tools.Add(ResponseTool.CreateWebSearchTool());
@@ -117,37 +108,24 @@ public class ConversationWithResponsesAPIService(AzureOpenAIClient azureOpenAICl
                     options.PreviousResponseId = conversation.PreviousResponseId;
                 }
 
-                var response = await _responsesClient.CreateResponseAsync(items, options);
+                ResponseResult response = await _responsesClient.CreateResponseAsync(options);
 
-                if (response.Value.Status is ResponseStatus.InProgress or ResponseStatus.Queued)
+                string assistantText = response.GetOutputText();
+                string responseId = response.Id;
+
+                var assistantResponseMessage = new Message
                 {
-                    response = await GetCompletedResponseAsync(response);
-                }
+                    Text = assistantText,
+                    IsFromUser = false,
+                    ConversationId = conversationId,
+                };
 
-                if (response.Value.Status == ResponseStatus.Completed)
-                {
-                    string? assistantText = response.Value.GetOutputText();
-                    string? responseId = response.Value.Id;
+                conversation.Messages.Add(assistantResponseMessage);
+                conversation.LastMessageAt = DateTime.Now;
 
-                    var assistantResponseMessage = new Message
-                    {
-                        Text = assistantText!,
-                        IsFromUser = false,
-                        ConversationId = conversationId,
-                    };
-
-                    conversation.Messages.Add(assistantResponseMessage);
-                    conversation.LastMessageAt = DateTime.Now;
-
-                    // Persist last response id for stateful chaining via previous_response_id
-                    conversation.PreviousResponseId = responseId;
-                    changed = true;
-                }
-                else
-                {
-                    // set proper message in case of failure
-                    logger.LogWarning("Azure OpenAI Responses API returned incomplete response or empty text.");
-                }
+                // Persist last response id for stateful chaining via previous_response_id
+                conversation.PreviousResponseId = responseId;
+                changed = true;
             }
             catch (Exception ex)
             {
@@ -160,18 +138,6 @@ public class ConversationWithResponsesAPIService(AzureOpenAIClient azureOpenAICl
         if (changed) RaiseChanged();
 
         return conversation.Messages.OrderByDescending(x => x.Timestamp).FirstOrDefault();
-    }
-
-    private async Task<ClientResult<OpenAIResponse>> GetCompletedResponseAsync(ClientResult<OpenAIResponse> response)
-    {
-        do
-        {
-            await Task.Delay(500);
-            response = await _responsesClient.GetResponseAsync(response.Value.Id);
-        }
-        while (response.Value.Status is ResponseStatus.InProgress or ResponseStatus.Queued);
-
-        return response;
     }
 
     public void DeleteConversation(string conversationId)

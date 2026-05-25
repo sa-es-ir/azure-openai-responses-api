@@ -106,6 +106,7 @@ else
     private List<ChatMessage> messages = new();
     private MessageModel messageModel = new();
     private bool isSending = false;
+    private bool shouldScrollToBottom = false;
     private ElementReference messagesContainer;
 
     // Raw HTML is disabled so AI/markdown output can't inject scripts when rendered as MarkupString.
@@ -117,18 +118,18 @@ else
     private static MarkupString RenderMarkdown(string text) =>
         (MarkupString)Markdown.ToHtml(text ?? string.Empty, MarkdownPipeline);
 
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
     {
         userName = Name ?? string.Empty;
         currentConversationId = ConversationId ?? string.Empty;
 
         if (!string.IsNullOrEmpty(userName))
         {
-            await LoadConversation();
+            LoadConversation();
         }
     }
 
-    protected override async Task OnParametersSetAsync()
+    protected override void OnParametersSet()
     {
         // Check if conversation ID has changed
         var newConversationId = ConversationId ?? string.Empty;
@@ -137,14 +138,16 @@ else
         if (newConversationId != currentConversationId)
         {
             currentConversationId = newConversationId;
-            await LoadConversation();
+            LoadConversation();
         }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender)
+        // Scroll after the DOM has rendered the new messages, so scrollHeight is current.
+        if (firstRender || shouldScrollToBottom)
         {
+            shouldScrollToBottom = false;
             await ScrollToBottom();
         }
     }
@@ -172,8 +175,8 @@ else
         messageModel.Text = string.Empty;
         isSending = true;
 
+        shouldScrollToBottom = true;
         StateHasChanged();
-        await ScrollToBottom();
 
         var AssistantResponse = await ConversationService.AddMessageAsync(currentConversationId, "", false);
 
@@ -187,11 +190,11 @@ else
         messages.Add(serverMessage);
         isSending = false;
 
+        shouldScrollToBottom = true;
         StateHasChanged();
-        await ScrollToBottom();
     }
 
-    private async Task LoadConversation()
+    private void LoadConversation()
     {
         messages.Clear();
 
@@ -210,8 +213,8 @@ else
             }
         }
 
+        shouldScrollToBottom = true;
         StateHasChanged();
-        await ScrollToBottom();
     }
 
     private async Task ScrollToBottom()
