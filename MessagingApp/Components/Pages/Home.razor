@@ -2,33 +2,43 @@
 @rendermode InteractiveServer
 @inject NavigationManager NavigationManager
 
-<PageTitle>Home</PageTitle>
+<PageTitle>MoodBites - AI Food Suggestions</PageTitle>
 
 <div class="home-container">
+    <div class="home-decor" aria-hidden="true">
+        <span class="floatie f1">🍕</span>
+        <span class="floatie f2">🍜</span>
+        <span class="floatie f3">🥗</span>
+        <span class="floatie f4">🍰</span>
+        <span class="floatie f5">🍔</span>
+        <span class="floatie f6">🍓</span>
+    </div>
+
     <div class="home-content">
-        <h1 class="home-title">Welcome to ChatApp</h1>
-        <p class="home-subtitle">A modern real-time messaging application</p>
+        <div class="home-badge">🍽️ AI-Powered Meal Matchmaker</div>
+        <h1 class="home-title">MoodBites</h1>
+        <p class="home-subtitle">Tell us how you feel, and we'll serve up the perfect meal for your mood.</p>
 
         <div class="home-features">
             <div class="feature">
-                <div class="feature-icon">💬</div>
-                <h3>Real-time Chat</h3>
-                <p>Send and receive messages instantly</p>
+                <div class="feature-icon">😋</div>
+                <h3>Share Your Mood</h3>
+                <p>Happy, cozy, or adventurous — your craving starts with a feeling</p>
             </div>
             <div class="feature">
-                <div class="feature-icon">🎨</div>
-                <h3>Modern Design</h3>
-                <p>Beautiful and intuitive user interface</p>
+                <div class="feature-icon">🤖</div>
+                <h3>AI-Picked Dishes</h3>
+                <p>Smart, personalized food suggestions powered by Azure OpenAI</p>
             </div>
             <div class="feature">
-                <div class="feature-icon">⚡</div>
-                <h3>Fast & Responsive</h3>
-                <p>Built with Blazor Server for optimal performance</p>
+                <div class="feature-icon">🍴</div>
+                <h3>Endless Flavors</h3>
+                <p>From comfort food to something fresh, there's always a tasty match</p>
             </div>
         </div>
 
-        <button class="btn btn-primary btn-lg home-cta" @onclick="StartChatting">
-            Start Chatting Now
+        <button class="btn btn-lg home-cta" @onclick="StartChatting">
+            Find My Meal 🍽️
         </button>
     </div>
 </div>

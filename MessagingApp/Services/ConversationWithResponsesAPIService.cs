@@ -106,7 +106,7 @@ public class ConversationWithResponsesAPIService(AzureOpenAIClient azureOpenAICl
 
                 var options = new ResponseCreationOptions
                 {
-                    Instructions = "You are an AI assistant that only talks about food based on the user's mood. remember what the user mood before and offer him again if they ask. remember personal user info like name if they put"
+                    Instructions = "You are an AI assistant that only talks about food based on the user's mood. remember what the user mood before and offer him again if they ask. remember personal user info like name if they put",
                 };
 
                 // To add external tools
