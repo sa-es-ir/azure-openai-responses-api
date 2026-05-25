@@ -123,6 +123,45 @@
     word-wrap: break-word;
 }
 
+/* Markdown-rendered content (assistant messages) */
+.message-text ::deep p {
+    margin: 0 0 0.5rem;
+}
+
+.message-text ::deep p:last-child {
+    margin-bottom: 0;
+}
+
+.message-text ::deep ul,
+.message-text ::deep ol {
+    margin: 0.25rem 0;
+    padding-left: 1.25rem;
+}
+
+.message-text ::deep pre {
+    background: rgba(0, 0, 0, 0.06);
+    padding: 10px 12px;
+    border-radius: 8px;
+    overflow-x: auto;
+}
+
+.message-text ::deep code {
+    background: rgba(0, 0, 0, 0.06);
+    padding: 2px 5px;
+    border-radius: 4px;
+    font-size: 0.9em;
+}
+
+.message-text ::deep pre code {
+    background: none;
+    padding: 0;
+}
+
+.message-text ::deep a {
+    color: inherit;
+    text-decoration: underline;
+}
+
 .chat-input-container {
     background: white;
     padding: 20px;

@@ -1,5 +1,6 @@
 @page "/messaging"
 @rendermode InteractiveServer
+@using Markdig
 @inject IJSRuntime JSRuntime
 @inject NavigationManager NavigationManager
 @inject MessagingApp.Services.IConversationService ConversationService
@@ -55,7 +56,16 @@ else
                                 <span class="sender">@(message.IsFromUser? userName : "Assistant")</span>
                                 <span class="timestamp">@message.Timestamp.ToString("HH:mm")</span>
                             </div>
-                            <div class="message-text">@message.Text</div>
+                            <div class="message-text">
+                                @if (message.IsFromUser)
+                                {
+                                    @message.Text
+                                }
+                                else
+                                {
+                                    @RenderMarkdown(message.Text)
+                                }
+                            </div>
                         </div>
                     </div>
                 }
@@ -97,6 +107,15 @@ else
     private MessageModel messageModel = new();
     private bool isSending = false;
     private ElementReference messagesContainer;
+
+    // Raw HTML is disabled so AI/markdown output can't inject scripts when rendered as MarkupString.
+    private static readonly MarkdownPipeline MarkdownPipeline = new MarkdownPipelineBuilder()
+        .DisableHtml()
+        .UseSoftlineBreakAsHardlineBreak()
+        .Build();
+
+    private static MarkupString RenderMarkdown(string text) =>
+        (MarkupString)Markdown.ToHtml(text ?? string.Empty, MarkdownPipeline);
 
     protected override async Task OnInitializedAsync()
     {
